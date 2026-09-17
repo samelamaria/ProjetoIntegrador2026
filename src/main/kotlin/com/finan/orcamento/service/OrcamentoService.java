@@ -1,64 +1,62 @@
 package com.finan.orcamento.service;
 
 import com.finan.orcamento.model.OrcamentoModel;
-import com.finan.orcamento.model.UsuarioModel;
 import com.finan.orcamento.repositories.OrcamentoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class OrcamentoService {
-    @Autowired
-    private OrcamentoRepository orcamentoRepository;
+    private final OrcamentoRepository orcamentoRepository;
+    private final UsuarioService usuarioService;
 
-    public List<OrcamentoModel> buscarCadastro(){
+    public OrcamentoService(OrcamentoRepository orcamentoRepository, UsuarioService usuarioService) {
+        this.orcamentoRepository = orcamentoRepository;
+        this.usuarioService = usuarioService;
+    }
+
+    public List<OrcamentoModel> buscarCadastro() {
         return orcamentoRepository.findAll();
     }
-    public OrcamentoModel buscaId(Long id){
-        Optional<OrcamentoModel>obj= orcamentoRepository.findById(id);
-        if (obj.isPresent()) {
-            return obj.get();
-        } else {
-            throw new RuntimeException("Orçamento não encontrado");
-        }
-    }
-    public OrcamentoModel cadastrarOrcamento(OrcamentoModel orcamentoModel){
-        //calcula ICMS
-        //calculoICMS(orcamentoModel)
-        orcamentoModel.calcularIcms();
-        return orcamentoRepository.save(orcamentoModel);
+
+    public OrcamentoModel buscaId(Long id) {
+        return orcamentoRepository.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Orçamento não encontrado"));
     }
 
-    public OrcamentoModel atualizaCadastro(OrcamentoModel orcamentoModel, Long id){
-        OrcamentoModel newOrcamentoModel = buscaId(id);
-        //calcula ICMS
-        //calculoICMS(orcamentoModel);
-       newOrcamentoModel.setValorOrcamento(orcamentoModel.getValorOrcamento());
-       newOrcamentoModel.setValorICMS(orcamentoModel.getValorICMS());
-        return orcamentoRepository.save(newOrcamentoModel);
-    }
-    public void deletaOrcamento(Long id){
-        orcamentoRepository.deleteById(id);
+    @Transactional
+    public OrcamentoModel cadastrarOrcamento(OrcamentoModel orcamento) {
+        orcamento.setId(null);
+        prepararOrcamento(orcamento);
+        return orcamentoRepository.save(orcamento);
     }
 
-    //funções
-    //Função calcula ICMS
-   /* public void calculoICMS(OrcamentoModel orcamentoModel) {
-        BigDecimal valorOrcamento = orcamentoModel.getValorOrcamento();
-        String icmsEstados = orcamentoModel.getIcmsEstados().toString();
-        BigDecimal icmsMG = new BigDecimal("0.18");
-        BigDecimal icmsSP = new BigDecimal("0.12");
-        BigDecimal icmsRJ = new BigDecimal("0.17");
-        if (icmsEstados.equals("ICMS_MG")) {
-            orcamentoModel.setValorICMS(valorOrcamento.multiply(icmsMG));
-        } else if (icmsEstados.equals("ICMS_SP")) {
-            orcamentoModel.setValorICMS(valorOrcamento.multiply(icmsSP));
-        } else {
-            orcamentoModel.setValorICMS(valorOrcamento.multiply(icmsRJ));
+    @Transactional
+    public OrcamentoModel atualizaCadastro(OrcamentoModel orcamento, Long id) {
+        OrcamentoModel existente = buscaId(id);
+        existente.setValorOrcamento(orcamento.getValorOrcamento());
+        existente.setIcmsEstados(orcamento.getIcmsEstados());
+        existente.setUsuario(orcamento.getUsuario());
+        prepararOrcamento(existente);
+        return orcamentoRepository.save(existente);
+    }
+
+    private void prepararOrcamento(OrcamentoModel orcamento) {
+        if (orcamento.getUsuario() != null) {
+            if (orcamento.getUsuario().getId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe o ID do usuário");
+            }
+            orcamento.setUsuario(usuarioService.buscaId(orcamento.getUsuario().getId()));
         }
-    }*/
+        orcamento.calcularIcms();
+    }
+
+    @Transactional
+    public void deletaOrcamento(Long id) {
+        orcamentoRepository.delete(buscaId(id));
+    }
 }

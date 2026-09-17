@@ -2,40 +2,48 @@ package com.finan.orcamento.service;
 
 import com.finan.orcamento.model.UsuarioModel;
 import com.finan.orcamento.repositories.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class UsuarioService {
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public List<UsuarioModel> buscarUsuario(){
-        return usuarioRepository.findAll();
+    public UsuarioService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
     }
 
-    public UsuarioModel buscaId(Long id){
-        Optional<UsuarioModel>obj=usuarioRepository.findById(id);
-        if (obj.isPresent()) {
-            return obj.get();
-        } else {
-            throw new RuntimeException("Usuário não encontrado");
-        }
+    public List<UsuarioModel> buscarUsuario() {
+        return usuarioRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
-    public UsuarioModel cadastrarUsuario(UsuarioModel usuarioModel){
-        return usuarioRepository.save(usuarioModel);
+    public UsuarioModel buscaId(Long id) {
+        return usuarioRepository.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
     }
 
-    public UsuarioModel atualizaUsuario(UsuarioModel usuarioModel, Long id){
-        UsuarioModel newUsuarioModel = buscaId(id);
-        newUsuarioModel.setNomeUsuario(usuarioModel.getNomeUsuario());
-        return usuarioRepository.save(newUsuarioModel);
+    @Transactional
+    public UsuarioModel cadastrarUsuario(UsuarioModel usuario) {
+        usuario.setId(null);
+        return usuarioRepository.save(usuario);
     }
-    public void deletaUsuario(Long id){
-        usuarioRepository.deleteById(id);
+
+    @Transactional
+    public UsuarioModel atualizaUsuario(UsuarioModel usuario, Long id) {
+        UsuarioModel existente = buscaId(id);
+        existente.setNomeUsuario(usuario.getNomeUsuario());
+        existente.setCpf(usuario.getCpf());
+        existente.setDataNascimento(usuario.getDataNascimento());
+        return usuarioRepository.save(existente);
+    }
+
+    @Transactional
+    public void deletaUsuario(Long id) {
+        usuarioRepository.delete(buscaId(id));
     }
 }

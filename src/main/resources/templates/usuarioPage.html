@@ -1,61 +1,75 @@
-<!doctype html>
-<html xmlns:th="http://www.thymeleaf.org">
+﻿<!doctype html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <style>
-        body {
-            text-align:center
-        }
-    </style>
-    <title>usuario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#183e35">
+    <title>Usuários · Orça</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+    <script th:src="@{/js/usuarios.js}" src="/js/usuarios.js" defer></script>
 </head>
 <body>
-    <h1>Cadastro de usuários</h1>
-    <form id="usuarioForm" th:action="@{/usuarios}" th:object="${usuarioModel}" method="post">
-        <label>Nome do Usuário</label>
-        <input type="text" id="nomeProduto"  th:field="*{nomeUsuario}"><br>
-        <button id="salvarUsuario" type="submit">Salvar</button>
-    </form>
-    <h2>Usuários Cadastrados</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nome do Usuário</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="usuario : ${usuarios}">
-            <td th:text="${usuario.id}"></td>
-            <td th:text="${usuario.nomeUsuario}"></td>
-        </tr>
-        </tbody>
-    </table>
-    <script>
-        document.getElementById("usuarioForm").addEventListener("submit", function(event) {
-        event.preventDefault(); // Impede o envio padrão do formulário
-
-        var form = event.target;
-        var formData = new FormData(form);
-
-        fetch(form.action, {
-            method: form.method,
-            body: formData
-        }).then(response => {
-            if (response.ok) {
-                window.location.href = "/usuarios/pesquisa";
-                alert("Salvo com sucesso");
-            } else {
-                console.error("Erro ao salvar o usuário");
-            }
-        }).catch(error => {
-            console.error("Erro ao salvar o usuário", error);
-            alert("Erro ao Salvar");
-        });
-    });
-    </script>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<aside class="sidebar">
+    <a class="brand" th:href="@{/}" aria-label="Orça, página inicial"><span class="brand-icon">o.</span> orça<span class="brand-dot">.</span></a>
+    <div class="workspace"><span class="workspace-icon">O</span><div>Meu espaço<small>Gestão de orçamentos</small></div></div>
+    <p class="nav-label">PRINCIPAL</p>
+    <nav aria-label="Menu principal"><a class="nav-item active" th:href="@{/usuarios}" aria-current="page"><span aria-hidden="true">◉</span> Usuários <span class="nav-count" th:text="${#lists.size(usuarios)}">0</span></a></nav>
+    <div class="sidebar-note"><span class="note-spark" aria-hidden="true">✳</span><h2>Organizar é o<br>primeiro passo.</h2><p>Seus usuários em um só lugar. Mais clareza para o seu dia a dia.</p><span class="note-line"></span></div>
+    <div class="sidebar-footer"><span class="status-dot"></span> Seu espaço de gestão</div>
+</aside>
+<div class="app">
+    <header class="topbar"><span>Meu espaço <span class="breadcrumb-separator">/</span> <strong>Usuários</strong></span><span class="topbar-badge">Gestão simplificada <span aria-hidden="true">✦</span></span></header>
+    <main id="conteudo">
+        <div class="page-heading"><div><p class="eyebrow">CONEXÕES QUE IMPORTAM</p><h1>Pequenos cadastros.<br>Grandes possibilidades<span>.</span></h1><p class="page-description">Organize seus usuários e deixe tudo pronto para o próximo orçamento.</p></div><a class="button button-dark" href="#nomeUsuario"><span aria-hidden="true">+</span> Novo usuário</a></div>
+        <section class="overview" aria-label="Resumo de usuários">
+            <div class="overview-main"><span class="metric-icon" aria-hidden="true">◉</span><div><p>Total de usuários</p><strong th:text="${#lists.size(usuarios)}">0</strong></div><span class="metric-tag">No seu espaço</span></div>
+            <div class="overview-copy"><span class="small-label">TUDO COMEÇA COM PESSOAS</span><p>Uma base organizada.<br>Uma gestão mais leve.</p></div>
+            <div class="overview-art" aria-hidden="true"><span></span><span></span><span></span></div>
+        </section>
+        <div class="alert success" role="status" th:if="${sucesso}" th:text="${sucesso}"></div>
+        <div class="content-grid">
+            <section class="card register-card" aria-labelledby="cadastro-titulo">
+                <div class="section-kicker"><span class="square-icon" aria-hidden="true">+</span><span>UM NOVO COMEÇO</span></div>
+                <h2 id="cadastro-titulo">Adicionar usuário</h2><p class="muted">Quem vai fazer parte do seu próximo projeto?</p>
+                <form id="usuarioForm" th:action="@{/usuarios}" th:object="${usuarioModel}" method="post">
+                    <label for="nomeUsuario">Nome do usuário <span aria-hidden="true">*</span></label>
+                    <input type="text" id="nomeUsuario" th:field="*{nomeUsuario}" placeholder="Ex.: Ana Oliveira" required maxlength="100" autocomplete="name" aria-describedby="nome-ajuda nome-erro" th:classappend="${#fields.hasErrors('nomeUsuario')} ? 'invalid'" th:attr="aria-invalid=${#fields.hasErrors('nomeUsuario')}">
+                    <p class="field-hint" id="nome-ajuda">Use o nome pelo qual a pessoa é conhecida.</p>
+                    <p class="field-error" id="nome-erro" th:if="${#fields.hasErrors('nomeUsuario')}" th:errors="*{nomeUsuario}" role="alert"></p>
+                    <div class="form-field">
+                        <label for="cpf">CPF <span aria-hidden="true">*</span></label>
+                        <input type="text" id="cpf" th:field="*{cpf}" placeholder="000.000.000-00" required maxlength="14" inputmode="numeric" pattern="[0-9]{3}\.?[0-9]{3}\.?[0-9]{3}-?[0-9]{2}" aria-describedby="cpf-ajuda cpf-erro" th:classappend="${#fields.hasErrors('cpf')} ? 'invalid'" th:attr="aria-invalid=${#fields.hasErrors('cpf')}">
+                        <p class="field-hint" id="cpf-ajuda">Informe os 11 dígitos, com ou sem pontuação.</p>
+                        <p class="field-error" id="cpf-erro" th:if="${#fields.hasErrors('cpf')}" th:errors="*{cpf}" role="alert"></p>
+                    </div>
+                    <div class="form-field">
+                        <label for="dataNascimento">Data de nascimento <span aria-hidden="true">*</span></label>
+                        <input type="date" id="dataNascimento" th:field="*{dataNascimento}" required autocomplete="bday" th:max="${T(java.time.LocalDate).now()}" aria-describedby="nascimento-erro" th:classappend="${#fields.hasErrors('dataNascimento')} ? 'invalid'" th:attr="aria-invalid=${#fields.hasErrors('dataNascimento')}">
+                        <p class="field-error" id="nascimento-erro" th:if="${#fields.hasErrors('dataNascimento')}" th:errors="*{dataNascimento}" role="alert">Informe uma data válida.</p>
+                    </div>
+                    <button class="button button-dark submit-button" type="submit">Cadastrar usuário <span aria-hidden="true">↗</span></button>
+                </form>
+                <div class="form-footnote"><span aria-hidden="true">✧</span> Pronto em um instante. Organizado sempre.</div>
+            </section>
+            <section class="card directory-card" aria-labelledby="lista-titulo">
+                <div class="directory-heading"><div><h2 id="lista-titulo">Seus usuários <span class="count-pill" th:text="${#lists.size(usuarios)}">0</span></h2><p class="muted">Cada pessoa, no lugar certo.</p></div><span class="list-symbol" aria-hidden="true">☷</span></div>
+                <div class="search-wrap" hidden id="busca-container"><span aria-hidden="true">⌕</span><label class="sr-only" for="busca">Buscar usuário por nome, CPF ou ID</label><input type="search" id="busca" placeholder="Buscar por nome, CPF ou ID..." autocomplete="off"></div>
+                <div class="table-wrap" th:unless="${#lists.isEmpty(usuarios)}">
+                    <table><thead><tr><th scope="col">USUÁRIO</th><th scope="col">ID</th><th scope="col" class="align-right">CADASTRO</th></tr></thead><tbody id="usuarios-lista">
+                    <tr th:each="usuario : ${usuarios}" data-user-row>
+                        <td><div class="person"><span class="avatar" th:text="${#strings.substring(usuario.nomeUsuario, 0, 1)}">A</span><div class="person-details"><span class="person-name" th:text="${usuario.nomeUsuario}">Nome</span><span class="person-cpf" th:text="${usuario.cpfFormatado}" th:attr="data-cpf=${usuario.cpf}">CPF</span><span class="person-birth" th:text="${usuario.dataNascimento != null ? 'Nascimento: ' + #temporals.format(usuario.dataNascimento, 'dd/MM/yyyy') : 'Nascimento não informado'}">Nascimento</span></div></div></td>
+                        <td class="user-id" th:text="${'#' + usuario.id}">#1</td><td class="align-right"><span class="registered"><span></span> Salvo</span></td>
+                    </tr>
+                    </tbody></table>
+                </div>
+                <div class="empty-state" th:if="${#lists.isEmpty(usuarios)}"><span class="empty-icon" aria-hidden="true">♧</span><h3>Seu próximo contato começa aqui</h3><p>Cadastre o primeiro usuário no formulário.<br>Ele aparecerá nesta lista.</p></div>
+                <div class="empty-state" id="sem-resultados" hidden><h3>Nenhum usuário encontrado</h3><p>Tente outro nome, CPF ou ID.</p></div>
+                <div class="directory-footer"><span id="resultado-contagem" role="status" aria-live="polite" th:text="|${#lists.size(usuarios)} usuário(s) cadastrado(s)|">0 usuários cadastrados</span><span>Mais recentes primeiro</span></div>
+            </section>
+        </div>
+        <footer class="page-footer"><span>orça. <span>Menos complicação, mais organização.</span></span><span>Feito para facilitar.</span></footer>
+    </main>
+</div>
 </body>
 </html>

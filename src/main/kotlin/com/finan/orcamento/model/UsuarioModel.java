@@ -3,10 +3,12 @@ package com.finan.orcamento.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import org.hibernate.validator.constraints.br.CPF;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,19 +23,54 @@ public class UsuarioModel implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Column(name="nome_usuario")
+    @NotBlank(message = "Informe o nome do usuário.")
+    @Size(max = 100, message = "O nome deve ter até 100 caracteres.")
+    @Column(name="nome_usuario", nullable = false, length = 100)
     private String nomeUsuario;
 
+    @NotBlank(message = "Informe o CPF.")
+    @CPF(message = "Informe um CPF válido.")
+    @Column(length = 11)
+    private String cpf;
+
+    @NotNull(message = "Informe a data de nascimento.")
+    @PastOrPresent(message = "A data de nascimento não pode estar no futuro.")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Column(name = "data_nascimento")
+    private LocalDate dataNascimento;
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf == null ? null : cpf.strip().replace(".", "").replace("-", "");
+    }
+
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = dataNascimento;
+    }
+
     @JsonIgnore
-    @OneToMany(mappedBy = "id")
+    public String getCpfFormatado() {
+        if (cpf == null || cpf.length() != 11) return "Não informado";
+        return cpf.substring(0, 3) + "." + cpf.substring(3, 6) + "."
+                + cpf.substring(6, 9) + "-" + cpf.substring(9);
+    }
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "usuario")
     private List<OrcamentoModel> orcamentos = new ArrayList<>();
 
     public UsuarioModel(){}
 
     public UsuarioModel(Long id, String nomeUsuario, List<OrcamentoModel> orcamentos) {
         this.id = id;
-        this.nomeUsuario = nomeUsuario;
+        setNomeUsuario(nomeUsuario);
         this.orcamentos = orcamentos;
     }
 
@@ -50,7 +87,7 @@ public class UsuarioModel implements Serializable {
     }
 
     public void setNomeUsuario(String nomeUsuario) {
-        this.nomeUsuario = nomeUsuario;
+        this.nomeUsuario = nomeUsuario == null ? null : nomeUsuario.strip();
     }
 
     public List<OrcamentoModel> getOrcamentos() {

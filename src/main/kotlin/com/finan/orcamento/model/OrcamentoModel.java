@@ -2,10 +2,9 @@ package com.finan.orcamento.model;
 
 import com.finan.orcamento.model.enums.IcmsEstados;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -18,14 +17,17 @@ public class OrcamentoModel implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "Selecione o estado do ICMS.")
     @Enumerated(EnumType.STRING)
     private IcmsEstados icmsEstados;
 
-    @NotNull
-    @Column(name="valor_orcamento")
+    @NotNull(message = "Informe o valor do orçamento.")
+    @DecimalMin(value = "0.01", message = "O valor deve ser maior que zero.")
+    @Digits(integer = 12, fraction = 2, message = "Use até 12 dígitos inteiros e 2 casas decimais.")
+    @Column(name="valor_orcamento", precision = 14, scale = 2, nullable = false)
     private BigDecimal valorOrcamento;
 
-    @Column(name="valor_icms")
+    @Column(name="valor_icms", precision = 14, scale = 2)
     private BigDecimal valorICMS;
 
     @ManyToOne
@@ -33,7 +35,8 @@ public class OrcamentoModel implements Serializable {
     private UsuarioModel usuario;
 
     public void calcularIcms() {
-        this.valorICMS = this.icmsEstados.getStrategy().calcular(this.valorOrcamento);
+        this.valorICMS = this.icmsEstados.getStrategy().calcular(this.valorOrcamento)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     public OrcamentoModel(){}
